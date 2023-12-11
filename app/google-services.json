@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "530502380816",
+    "project_id": "proyecto-101-8acd1",
+    "storage_bucket": "proyecto-101-8acd1.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:530502380816:android:3fa480c7c5e2d288fec995",
+        "android_client_info": {
+          "package_name": "com.chunmaru.app101"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAUPE9tb6Ii0GpZZcNubW09h3xkq_ChdTA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
