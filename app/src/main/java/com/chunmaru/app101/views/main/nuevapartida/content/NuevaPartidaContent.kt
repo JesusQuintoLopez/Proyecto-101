@@ -5,5 +5,5 @@ import androidx.compose.runtime.Composable
 
 @Composable
 fun NuevaPartidaContent(paddingValues: PaddingValues){
-
+//escrito en test por segunda vez
 }
