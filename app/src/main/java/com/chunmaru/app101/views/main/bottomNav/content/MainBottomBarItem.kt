@@ -15,6 +15,7 @@ import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import com.chunmaru.app101.navigation.screen.main.MainScreen
+import com.chunmaru.app101.ui.theme.Purple40
 import com.chunmaru.app101.ui.theme.Red
 
 @Composable
@@ -38,7 +39,7 @@ fun RowScope.MainBottomBarItem(
             unselectedIconColor = Color.White,
             selectedTextColor = Red,
             unselectedTextColor = Color.White,
-            //indicatorColor = Color.Yellow
+            indicatorColor = Purple40
         ),
         //unselectedContentColor = LocalContentColor.current.copy(alpha = ContentAlpha.disabled),
         onClick = {
