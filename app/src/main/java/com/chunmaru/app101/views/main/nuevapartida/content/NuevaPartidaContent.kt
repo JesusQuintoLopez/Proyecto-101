@@ -317,7 +317,7 @@ fun NuevaPartidaContent(paddingValues: PaddingValues, vm: NuevaPartidaViewModel 
                                    Checkbox(
                                        checked = vm.stateJugadores.get(jug.id.toInt()).estado,
                                        onCheckedChange = {
-                                       val aux = vm.stateJugadores.get(jug.id.toInt())
+                                           val aux = vm.stateJugadores.get(jug.id.toInt())
                                            vm.stateJugadores.set(jug.id.toInt(),aux.copy(estado = it)) }
                                    )
                                    }
