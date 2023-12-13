@@ -18,11 +18,13 @@ class NuevaPartidaViewModel @Inject constructor() : ViewModel() {
 
     var errorMessage = ""
     var showAlert by mutableStateOf(false)
+    var showInfo by mutableStateOf(false)
     var stateJugadores = mutableStateListOf<JugadorEntity>()
-    val listJug1 = mutableStateListOf<String>("0")
-    val listJug2 = mutableStateListOf<String>("0")
-    val listJug3 = mutableStateListOf<String>("0")
-    val listJug4 = mutableStateListOf<String>("0")
+    var listJug1 = mutableStateListOf<String>("0")
+    var listJug2 = mutableStateListOf<String>("0")
+    var listJug3 = mutableStateListOf<String>("0")
+    var listJug4 = mutableStateListOf<String>("0")
+    var jugadoresEliminados = mutableStateListOf<JugadorEntity>()
 
 
     fun onValueNumJug(value: String) {
@@ -84,7 +86,7 @@ class NuevaPartidaViewModel @Inject constructor() : ViewModel() {
         for (i in 1..state.numJugadores.toInt()) {
             if (i == 1) stateJugadores.add(
                 JugadorEntity(
-                    id = "j1",
+                    id = "0",
                     name = state.jugador1,
                     deuda = state.apuesta.toInt()
                 )
@@ -92,7 +94,7 @@ class NuevaPartidaViewModel @Inject constructor() : ViewModel() {
 
             if (i == 2) stateJugadores.add(
                 JugadorEntity(
-                    id = "j2",
+                    id = "1",
                     name = state.jugador2,
                     deuda = state.apuesta.toInt()
                 )
@@ -100,7 +102,7 @@ class NuevaPartidaViewModel @Inject constructor() : ViewModel() {
 
             if (i == 3) stateJugadores.add(
                 JugadorEntity(
-                    id = "j3",
+                    id = "2",
                     name = state.jugador3,
                     deuda = state.apuesta.toInt()
                 )
@@ -108,7 +110,7 @@ class NuevaPartidaViewModel @Inject constructor() : ViewModel() {
 
             if (i == 4) stateJugadores.add(
                 JugadorEntity(
-                    id = "j4",
+                    id = "3",
                     name = state.jugador4,
                     deuda = state.apuesta.toInt()
                 )
@@ -118,6 +120,7 @@ class NuevaPartidaViewModel @Inject constructor() : ViewModel() {
         Log.d("iniciarPar", stateJugadores.size.toString())
     }
 
+    //accion cuando registra nueva puntuacion de los jugadores en 1 ronda
     fun RegistrarPuntos() {
         listJug1.add(state.punt1)
         listJug2.add(state.punt2)
@@ -125,27 +128,76 @@ class NuevaPartidaViewModel @Inject constructor() : ViewModel() {
         listJug4.add(state.punt4)
 
         suma(state.numJugadores)
-    }
 
+        regularizarSobrepaso(0, stateJugadores.get(0).puntaje)
+        regularizarSobrepaso(1, stateJugadores.get(1).puntaje)
+        regularizarSobrepaso(2, stateJugadores.get(2).puntaje)
+        regularizarSobrepaso(3, stateJugadores.get(3).puntaje)
+    }
+    //suma de todos los puntajes del jugador
     private fun suma(nJug: String) {
         if (nJug.equals("1") || nJug.equals("2") || nJug.equals("3") || nJug.equals("4")) {
             val aux = stateJugadores.get(0)
-            stateJugadores.set(0,aux.copy(puntaje = aux.puntaje+state.punt1.toInt()))
+            stateJugadores.set(0, aux.copy(puntaje = aux.puntaje + state.punt1.toInt()))
         }
         if (nJug.equals("2") || nJug.equals("3") || nJug.equals("4")) {
             val aux = stateJugadores.get(1)
-            stateJugadores.set(1,aux.copy(puntaje = aux.puntaje+state.punt2.toInt()))
+            stateJugadores.set(1, aux.copy(puntaje = aux.puntaje + state.punt2.toInt()))
         }
         if (nJug.equals("3") || nJug.equals("4")) {
             val aux = stateJugadores.get(2)
-            stateJugadores.set(2,aux.copy(puntaje = aux.puntaje+state.punt3.toInt()))
+            stateJugadores.set(2, aux.copy(puntaje = aux.puntaje + state.punt3.toInt()))
         }
         if (nJug.equals("4")) {
             val aux = stateJugadores.get(3)
-            stateJugadores.set(3,aux.copy(puntaje = aux.puntaje+state.punt4.toInt()))
+            stateJugadores.set(3, aux.copy(puntaje = aux.puntaje + state.punt4.toInt()))
         }
     }
 
+    //accion si un jugador sobrepasa 101
+    fun regularizarSobrepaso(jug: Int, ptj: Int) {
+        if (ptj > 100) {
+            val aux = stateJugadores.get(jug)
+            stateJugadores.set(
+                jug,
+                aux.copy(
+                    puntaje = 0,
+                    numElim = aux.numElim + 1,
+                    deuda = (aux.deuda + state.apuesta.toInt()),
+                    estado = true
+                )
+            )
+            jugadoresEliminados.add(aux)
+        }
+    }
+    //show alert para eliminar del juego totalmente a un jugador
+    fun AceptarShowAlertElim(){
+        jugadoresEliminados.map { jug->
+            if (stateJugadores.get(jug.id.toInt()).estado == false)
+            regularizarEliminado(jug.id.toInt(),jug.puntaje)
+        }
+        jugadoresEliminados.clear()
+    }
+
+    //accion para eliminar del juego totalmente a un jugador
+    fun regularizarEliminado(jug: Int, ptj: Int){
+        val aux = stateJugadores.get(jug)
+        stateJugadores.set(
+            jug,
+            aux.copy(
+                puntaje = 0,
+                numElim = aux.numElim - 1,
+                deuda = (aux.deuda - state.apuesta.toInt()),
+                estado = false
+            )
+        )
+        when(jug){
+            0->{state=state.copy(punt1 = "0")}
+            1->{state=state.copy(punt2 = "0")}
+            2->{state=state.copy(punt3 = "0")}
+            3->{state=state.copy(punt4 = "0")}
+        }
+    }
 
 }
 

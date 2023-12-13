@@ -23,13 +23,17 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Divider
 
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
@@ -40,8 +44,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -146,6 +152,7 @@ fun NuevaPartidaContent(paddingValues: PaddingValues, vm: NuevaPartidaViewModel 
                                     value = state.punt1,
                                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                     onValueChange = {vm.onValuePunt1(it)},
+                                    enabled = vm.stateJugadores.get(0).estado,
                                     textStyle = TextStyle(fontSize = 16.sp),
                                     label = { Text(text = "Ptje", fontSize = 12.sp) },
                                     placeholder = { Text(text = "Ptj", fontSize = 12.sp) }
@@ -158,6 +165,7 @@ fun NuevaPartidaContent(paddingValues: PaddingValues, vm: NuevaPartidaViewModel 
                                     value = state.punt2,
                                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                     onValueChange = {vm.onValuePunt2(it)},
+                                    enabled = vm.stateJugadores.get(1).estado,
                                     textStyle = TextStyle(fontSize = 16.sp),
                                     label = { Text(text = "Ptje", fontSize = 12.sp) },
                                     placeholder = { Text(text = "Ptj", fontSize = 12.sp) }
@@ -170,6 +178,7 @@ fun NuevaPartidaContent(paddingValues: PaddingValues, vm: NuevaPartidaViewModel 
                                     value = state.punt3,
                                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                     onValueChange = {vm.onValuePunt3(it)},
+                                    enabled = vm.stateJugadores.get(2).estado,
                                     textStyle = TextStyle(fontSize = 16.sp),
                                     label = { Text(text = "Ptje", fontSize = 12.sp) },
                                     placeholder = { Text(text = "Ptj", fontSize = 12.sp) }
@@ -182,6 +191,7 @@ fun NuevaPartidaContent(paddingValues: PaddingValues, vm: NuevaPartidaViewModel 
                                     value = state.punt4,
                                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                     onValueChange = {vm.onValuePunt4(it)},
+                                    enabled = vm.stateJugadores.get(3).estado,
                                     textStyle = TextStyle(fontSize = 16.sp),
                                     label = { Text(text = "Ptje", fontSize = 12.sp) },
                                     placeholder = { Text(text = "Ptj", fontSize = 12.sp) }
@@ -207,7 +217,15 @@ fun NuevaPartidaContent(paddingValues: PaddingValues, vm: NuevaPartidaViewModel 
                         shape = RoundedCornerShape(25.dp),
                         colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.7f))
                     ) {
-
+                        Row(modifier = Modifier.fillMaxWidth()) {
+                            Text(text = "Historial de puntuaciones")
+                            Spacer(modifier = Modifier.weight(1f))
+                            IconButton(onClick = { vm.showInfo = true }) {
+                                Icon(imageVector = ImageVector.vectorResource(id = R.drawable.ic_info),
+                                    contentDescription = "",
+                                    tint = Red)
+                            }
+                        }
                         Row(modifier = Modifier
                             .fillMaxWidth()
                             .height(320.dp)
@@ -288,7 +306,80 @@ fun NuevaPartidaContent(paddingValues: PaddingValues, vm: NuevaPartidaViewModel 
                 }
             }
 
+            if (vm.jugadoresEliminados.size>0){
+                AlertDialog(
+                    title = { Text(text = "Hay ${vm.jugadoresEliminados.size} jugador(es) eliminado(s), deje las casillas marcada del los jugadores que van a continuar")},
+                    text = {
+                           Column {
+                               vm.jugadoresEliminados.map {jug->
+                                   Row {
+                                   Text(text = jug.name)
+                                   Checkbox(
+                                       checked = vm.stateJugadores.get(jug.id.toInt()).estado,
+                                       onCheckedChange = {
+                                       val aux = vm.stateJugadores.get(jug.id.toInt())
+                                           vm.stateJugadores.set(jug.id.toInt(),aux.copy(estado = it)) }
+                                   )
+                                   }
+                               }
+                           }
+                    },
+                    onDismissRequest = {  },
+                    confirmButton = {
+                        Button(
+                            onClick = { vm.AceptarShowAlertElim() },
+                            colors = ButtonDefaults.buttonColors(
+                                contentColor = Color.White,
+                                containerColor = Red)) {
+                            Text(text = "Aceptar")
+                        }
+                    })
 
+
+            }
+            if (vm.showInfo){
+                AlertDialog(
+                    onDismissRequest = { /*TODO*/ },
+                    text = {
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            LazyRow(modifier = Modifier.fillMaxWidth(),horizontalArrangement = Arrangement.SpaceAround){
+                                items(vm.stateJugadores){jug->
+                                    Text(text = jug.name, fontWeight = FontWeight.Bold, color = Red)
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(15.dp))
+                            Text(text = "Puntuacion", fontWeight = FontWeight.Bold)
+                            LazyRow(modifier = Modifier.fillMaxWidth(),horizontalArrangement = Arrangement.SpaceAround){
+                                items(vm.stateJugadores){jug->
+                                    Text(text = jug.puntaje.toString())
+                                }
+                            }
+                            Text(text = "numero de eliminados", fontWeight = FontWeight.Bold)
+                            LazyRow(modifier = Modifier.fillMaxWidth(),horizontalArrangement = Arrangement.SpaceAround){
+                                items(vm.stateJugadores){jug->
+                                    Text(text = jug.numElim.toString())
+                                }
+                            }
+                            Text(text = "Apuesta en juego", fontWeight = FontWeight.Bold)
+                            LazyRow(modifier = Modifier.fillMaxWidth(),horizontalArrangement = Arrangement.SpaceAround){
+                                items(vm.stateJugadores){jug->
+                                    Text(text = jug.deuda.toString())
+                                }
+                            }
+                        }
+
+                    },
+                    confirmButton = {
+                        Button(onClick = { vm.showInfo = false },
+                            colors = ButtonDefaults.buttonColors(
+                                contentColor = Color.White,
+                                containerColor = Red)) {
+                            Text(text = "Miniminzar")
+                        }
+                    }
+                )
+
+            }
         }
 
     }
