@@ -1,17 +1,38 @@
 package com.chunmaru.app101.views.main.nuevapartida.content
 
+import android.util.Log
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 
+
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Divider
 
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldDefaults
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -21,18 +42,23 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.chunmaru.app101.R
+import com.chunmaru.app101.model.JugadorEntity
 import com.chunmaru.app101.ui.theme.Red
+import com.chunmaru.app101.views.components.Alert
 import com.chunmaru.app101.views.main.nuevapartida.NuevaPartidaViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NuevaPartidaContent(paddingValues: PaddingValues, vm: NuevaPartidaViewModel = hiltViewModel()) {
     val state = vm.state
+    var nJug = vm.state.numJugadores
     Box(
         modifier = Modifier
             .padding(paddingValues)
@@ -60,7 +86,11 @@ fun NuevaPartidaContent(paddingValues: PaddingValues, vm: NuevaPartidaViewModel 
                         vm.onValueNumJug(it)
                     },
                     {
-                        vm.transition = 1
+                        if (vm.validateForm()) {
+                            vm.transition = 1
+                        } else {
+                            vm.showAlert = true
+                        }
                     }
                 )
             }
@@ -70,7 +100,7 @@ fun NuevaPartidaContent(paddingValues: PaddingValues, vm: NuevaPartidaViewModel 
                     modifier = Modifier
                         .padding(top = 16.dp, start = 24.dp, end = 24.dp)
                         .fillMaxWidth(),
-                    numJug = vm.state.numJugadores.toInt(),
+                    numJug = vm.state.numJugadores,
                     jug1 = state.jugador1,
                     jug2 = state.jugador2,
                     jug3 = state.jugador3,
@@ -81,12 +111,182 @@ fun NuevaPartidaContent(paddingValues: PaddingValues, vm: NuevaPartidaViewModel 
                     onValue3 = { vm.onValueJug3(it) },
                     onValue4 = { vm.onValueJug4(it) },
                     onValueApu = { vm.onValueApuesta(it) },
-                    onValueBtn = {vm.transition = 3}
+                    onValueBtn = {
+                        vm.iniciarPartida()
+                        vm.transition = 3
+                    }
                 )
 
 
             }
 
+            if (vm.transition == 3) {
+                Card(
+                    modifier = Modifier
+                        .padding(top = 16.dp, start = 24.dp, end = 24.dp)
+                        .fillMaxWidth(),
+                    shape = RoundedCornerShape(25.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.7f))
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        LazyRow(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly){
+                            items(vm.stateJugadores) { jug ->
+                                ItemName(name = jug.name)
+                            }
+                        }
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                            if(nJug.equals("1") || nJug.equals("2") || nJug.equals("3") || nJug.equals("4")){
+                                OutlinedTextField(
+                                    modifier = Modifier.width(60.dp),
+                                    value = state.punt1,
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                    onValueChange = {vm.onValuePunt1(it)},
+                                    textStyle = TextStyle(fontSize = 16.sp),
+                                    label = { Text(text = "Ptje", fontSize = 12.sp) },
+                                    placeholder = { Text(text = "Ptj", fontSize = 12.sp) }
+                                )
+                            }
+
+                            if(nJug.equals("2") || nJug.equals("3") || nJug.equals("4")){
+                                OutlinedTextField(
+                                    modifier = Modifier.width(60.dp),
+                                    value = state.punt2,
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                    onValueChange = {vm.onValuePunt2(it)},
+                                    textStyle = TextStyle(fontSize = 16.sp),
+                                    label = { Text(text = "Ptje", fontSize = 12.sp) },
+                                    placeholder = { Text(text = "Ptj", fontSize = 12.sp) }
+                                )
+                            }
+
+                            if( nJug.equals("3") || nJug.equals("4")){
+                                OutlinedTextField(
+                                    modifier = Modifier.width(60.dp),
+                                    value = state.punt3,
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                    onValueChange = {vm.onValuePunt3(it)},
+                                    textStyle = TextStyle(fontSize = 16.sp),
+                                    label = { Text(text = "Ptje", fontSize = 12.sp) },
+                                    placeholder = { Text(text = "Ptj", fontSize = 12.sp) }
+                                )
+                            }
+
+                            if(nJug.equals("4")){
+                                OutlinedTextField(
+                                    modifier = Modifier.width(60.dp),
+                                    value = state.punt4,
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                    onValueChange = {vm.onValuePunt4(it)},
+                                    textStyle = TextStyle(fontSize = 16.sp),
+                                    label = { Text(text = "Ptje", fontSize = 12.sp) },
+                                    placeholder = { Text(text = "Ptj", fontSize = 12.sp) }
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(
+                            modifier = Modifier
+                                .width(250.dp)
+                                .height(50.dp),
+                            onClick = { vm.RegistrarPuntos() },
+                            colors = ButtonDefaults.buttonColors(containerColor = Red)) {
+                            Text(text = "Registrar puntos", color = Color.White)
+                        }
+                    }
+                }
+                if (vm.transition == 3) {
+                    Card(
+                        modifier = Modifier
+                            .padding(top = 16.dp, start = 24.dp, end = 24.dp)
+                            .fillMaxWidth(),
+                        shape = RoundedCornerShape(25.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.7f))
+                    ) {
+
+                        Row(modifier = Modifier
+                            .fillMaxWidth()
+                            .height(320.dp)
+                            .padding(top = 15.dp, end = 15.dp),
+                            horizontalArrangement = Arrangement.SpaceEvenly) {
+                            if(nJug.equals("1") || nJug.equals("2") || nJug.equals("3") || nJug.equals("4")){
+                                LazyColumn(horizontalAlignment = Alignment.CenterHorizontally){
+                                    items(vm.listJug1){
+                                        Text(text = it)
+                                    }
+                                }
+                            }
+
+                            if( nJug.equals("2") || nJug.equals("3") || nJug.equals("4")){
+                                LazyColumn(horizontalAlignment = Alignment.CenterHorizontally){
+                                    items(vm.listJug2){
+                                        Text(text = it)
+                                    }
+                                }
+                            }
+
+                            if(nJug.equals("3") || nJug.equals("4")){
+                                LazyColumn(horizontalAlignment = Alignment.CenterHorizontally){
+                                    items(vm.listJug3){
+                                        Text(text = it)
+                                    }
+                                }
+                            }
+
+                            if(nJug.equals("4")){
+                                LazyColumn(horizontalAlignment = Alignment.CenterHorizontally){
+                                    items(vm.listJug4){
+                                        Text(text = it)
+                                    }
+                                }
+                            }
+
+                        }
+
+                        Divider()
+
+                        Row(modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 15.dp, end = 15.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
+                            if(nJug.equals("1") || nJug.equals("2") || nJug.equals("3") || nJug.equals("4")){
+                                Text(text = vm.stateJugadores.get(0).puntaje.toString())
+                            }
+                            if(nJug.equals("2") || nJug.equals("3") || nJug.equals("4")){
+                                Text(text = vm.stateJugadores.get(1).puntaje.toString())
+                            }
+                            if(nJug.equals("3") || nJug.equals("4")){
+                                Text(text = vm.stateJugadores.get(2).puntaje.toString())
+                            }
+                            if(nJug.equals("4")){
+                                Text(text = vm.stateJugadores.get(3).puntaje.toString())
+                            }
+
+                        }
+
+
+
+                    }
+                }
+
+
+
+
+            }
+
+
+            if (vm.showAlert) {
+                Alert(
+                    title = "Error Form",
+                    message = vm.errorMessage,
+                    confirmText = "Aceptar",
+                    onConfirmClick = { vm.showAlert = false }) {
+
+                }
+            }
 
 
         }
@@ -94,3 +294,4 @@ fun NuevaPartidaContent(paddingValues: PaddingValues, vm: NuevaPartidaViewModel 
     }
 
 }
+

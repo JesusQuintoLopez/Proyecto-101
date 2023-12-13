@@ -27,7 +27,7 @@ import com.chunmaru.app101.ui.theme.Red
 @Composable
 fun Transition1(
     modifier: Modifier,
-    numJug:Int,
+    numJug: String,
     jug1: String,
     jug2: String,
     jug3: String,
@@ -51,46 +51,56 @@ fun Transition1(
                 .padding(28.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            if (numJug.equals("1") || numJug.equals("2") || numJug.equals("3") || numJug.equals("4")) {
+                OutlinedTextField(
+                    value = jug1,
+                    onValueChange = { onValue1(it) },
+                    label = {
+                        Text(
+                            text = "jugador 1"
+                        )
+                    })
+                Spacer(modifier = Modifier.height(16.dp))
+            }
 
-            OutlinedTextField(
-                value = jug1,
-                onValueChange = { onValue1(it) },
-                label = {
-                    Text(
-                        text = "jugador 1"
-                    )
-                })
-            Spacer(modifier = Modifier.height(16.dp))
 
-            OutlinedTextField(
-                value = jug2,
-                onValueChange = { onValue2(it) },
-                label = {
-                    Text(
-                        text = "jugador 2"
-                    )
-                })
-            Spacer(modifier = Modifier.height(16.dp))
+            if ( numJug.equals("2") || numJug.equals("3") || numJug.equals("4")) {
+                OutlinedTextField(
+                    value = jug2,
+                    onValueChange = { onValue2(it) },
+                    label = {
+                        Text(
+                            text = "jugador 2"
+                        )
+                    })
+                Spacer(modifier = Modifier.height(16.dp))
+            }
 
-            OutlinedTextField(
-                value = jug3,
-                onValueChange = { onValue3(it) },
-                label = {
-                    Text(
-                        text = "jugador 3"
-                    )
-                })
-            Spacer(modifier = Modifier.height(16.dp))
 
-            OutlinedTextField(
-                value = jug4,
-                onValueChange = { onValue4(it) },
-                label = {
-                    Text(
-                        text = "jugador 4"
-                    )
-                })
-            Spacer(modifier = Modifier.height(16.dp))
+            if ( numJug.equals("3") || numJug.equals("4")) {
+                OutlinedTextField(
+                    value = jug3,
+                    onValueChange = { onValue3(it) },
+                    label = {
+                        Text(
+                            text = "jugador 3"
+                        )
+                    })
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
+            if (numJug.equals("4")) {
+                OutlinedTextField(
+                    value = jug4,
+                    onValueChange = { onValue4(it) },
+                    label = {
+                        Text(
+                            text = "jugador 4"
+                        )
+                    })
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
 
             OutlinedTextField(
                 value = apuesta,
@@ -101,7 +111,12 @@ fun Transition1(
                     )
                 })
             Spacer(modifier = Modifier.height(16.dp))
-            Button(modifier = Modifier.height(50.dp).width(250.dp),
+
+
+            Button(
+                modifier = Modifier
+                    .height(50.dp)
+                    .width(250.dp),
                 onClick = { onValueBtn() },
                 colors = ButtonDefaults.buttonColors(containerColor = Red)
             ) {
