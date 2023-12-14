@@ -26,7 +26,6 @@ class NuevaPartidaViewModel @Inject constructor() : ViewModel() {
     var listJug4 = mutableStateListOf<String>("0")
     var jugadoresEliminados = mutableStateListOf<JugadorEntity>()
 
-
     fun onValueNumJug(value: String) {
         state = state.copy(numJugadores = value)
     }
@@ -131,9 +130,11 @@ class NuevaPartidaViewModel @Inject constructor() : ViewModel() {
 
         regularizarSobrepaso(0, stateJugadores.get(0).puntaje)
         regularizarSobrepaso(1, stateJugadores.get(1).puntaje)
-        regularizarSobrepaso(2, stateJugadores.get(2).puntaje)
-        regularizarSobrepaso(3, stateJugadores.get(3).puntaje)
+
+        if (stateJugadores.size > 2) regularizarSobrepaso(2, stateJugadores.get(2).puntaje)
+        if (stateJugadores.size > 3) regularizarSobrepaso(3, stateJugadores.get(3).puntaje)
     }
+
     //suma de todos los puntajes del jugador
     private fun suma(nJug: String) {
         if (nJug.equals("1") || nJug.equals("2") || nJug.equals("3") || nJug.equals("4")) {
@@ -164,17 +165,22 @@ class NuevaPartidaViewModel @Inject constructor() : ViewModel() {
                     puntaje = 0,
                     numElim = aux.numElim + 1,
                     deuda = (aux.deuda + state.apuesta.toInt()),
-                    estado = true
+                    estado = false
                 )
             )
             jugadoresEliminados.add(aux)
         }
     }
+
+
     //show alert para eliminar del juego totalmente a un jugador
     fun AceptarShowAlertElim(){
         jugadoresEliminados.map { jug->
-            if (stateJugadores.get(jug.id.toInt()).estado == false)
+            if(stateJugadores.get(jug.id.toInt()).estado == false){
             regularizarEliminado(jug.id.toInt(),jug.puntaje)
+            }else{
+            regularizarSpartanos(jug.id.toInt(),jug.puntaje)
+            }
         }
         jugadoresEliminados.clear()
     }
@@ -185,8 +191,8 @@ class NuevaPartidaViewModel @Inject constructor() : ViewModel() {
         stateJugadores.set(
             jug,
             aux.copy(
-                puntaje = 0,
-                numElim = aux.numElim - 1,
+                //puntaje = 0,
+                numElim = aux.numElim,
                 deuda = (aux.deuda - state.apuesta.toInt()),
                 estado = false
             )
@@ -197,6 +203,21 @@ class NuevaPartidaViewModel @Inject constructor() : ViewModel() {
             2->{state=state.copy(punt3 = "0")}
             3->{state=state.copy(punt4 = "0")}
         }
+    }
+
+    fun regularizarSpartanos(jug: Int, ptj: Int){
+        val aux = stateJugadores.get(jug)
+        stateJugadores.set(jug, aux.copy(puntaje = mayorPtj())
+        )
+    }
+    fun mayorPtj():Int{
+        var may=0
+        stateJugadores.map {jug->
+            if (jug.estado){
+                if (jug.puntaje>may) may = jug.puntaje
+            }
+        }
+        return may
     }
 
 }

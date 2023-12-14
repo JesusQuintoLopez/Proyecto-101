@@ -306,9 +306,11 @@ fun NuevaPartidaContent(paddingValues: PaddingValues, vm: NuevaPartidaViewModel 
                 }
             }
 
-            if (vm.jugadoresEliminados.size>0){
+            if (vm.jugadoresEliminados.size>0 && (vm.stateJugadores.size>vm.jugadoresEliminados.size+1)){
                 AlertDialog(
-                    title = { Text(text = "Hay ${vm.jugadoresEliminados.size} jugador(es) eliminado(s), deje las casillas marcada del los jugadores que van a continuar")},
+                    title = { Text(
+                        fontSize = 14.sp,
+                        text = "Hay ${vm.jugadoresEliminados.size} jugador(es) eliminado(s), Seleccione los jugadores que van a continuar")},
                     text = {
                            Column {
                                vm.jugadoresEliminados.map {jug->
@@ -337,6 +339,25 @@ fun NuevaPartidaContent(paddingValues: PaddingValues, vm: NuevaPartidaViewModel 
 
 
             }
+
+            if (vm.jugadoresEliminados.size>0 && (vm.stateJugadores.size==vm.jugadoresEliminados.size+1)){
+                var ganador = ""
+                vm.stateJugadores.map {jug->
+                    if(jug.estado) ganador=jug.name
+                }
+                AlertDialog(
+                    title = { Text(text = "Victoria por parte de $ganador")},
+                    onDismissRequest = { /*TODO*/ },
+                    confirmButton = {
+                        Button(
+                        onClick = { vm.AceptarShowAlertElim() },
+                        colors = ButtonDefaults.buttonColors(
+                            contentColor = Color.White,
+                            containerColor = Red)) {
+                        Text(text = "Aceptar")
+                    } })
+            }
+
             if (vm.showInfo){
                 AlertDialog(
                     onDismissRequest = { /*TODO*/ },
