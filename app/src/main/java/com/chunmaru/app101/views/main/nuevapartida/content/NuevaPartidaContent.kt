@@ -1,6 +1,6 @@
 package com.chunmaru.app101.views.main.nuevapartida.content
 
-import android.util.Log
+import android.app.Activity
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -17,10 +17,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
@@ -34,18 +36,23 @@ import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextFieldDefaults
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.TextStyle
@@ -55,7 +62,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.chunmaru.app101.R
-import com.chunmaru.app101.model.JugadorEntity
+import com.chunmaru.app101.ui.theme.Purple40
 import com.chunmaru.app101.ui.theme.Red
 import com.chunmaru.app101.views.components.Alert
 import com.chunmaru.app101.views.main.nuevapartida.NuevaPartidaViewModel
@@ -63,6 +70,7 @@ import com.chunmaru.app101.views.main.nuevapartida.NuevaPartidaViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NuevaPartidaContent(paddingValues: PaddingValues, vm: NuevaPartidaViewModel = hiltViewModel()) {
+    val activity = LocalContext.current as Activity
     val state = vm.state
     var nJug = vm.state.numJugadores
     Box(
@@ -70,6 +78,7 @@ fun NuevaPartidaContent(paddingValues: PaddingValues, vm: NuevaPartidaViewModel 
             .padding(paddingValues)
             .fillMaxSize()
     ) {
+
         Image(
             painter = painterResource(id = R.drawable.fondo3),
             contentDescription = "",
@@ -79,7 +88,7 @@ fun NuevaPartidaContent(paddingValues: PaddingValues, vm: NuevaPartidaViewModel 
             })
         )
 
-        Column {
+        Column{
 
 
             if (vm.transition == 0 || vm.transition == 1) {
@@ -209,16 +218,20 @@ fun NuevaPartidaContent(paddingValues: PaddingValues, vm: NuevaPartidaViewModel 
                         }
                     }
                 }
-                if (vm.transition == 3) {
-                    Card(
+
+                Card(
                         modifier = Modifier
                             .padding(top = 16.dp, start = 24.dp, end = 24.dp)
                             .fillMaxWidth(),
                         shape = RoundedCornerShape(25.dp),
                         colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.7f))
                     ) {
-                        Row(modifier = Modifier.fillMaxWidth()) {
-                            Text(text = "Historial de puntuaciones")
+                        Row(modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 25.dp, end = 25.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                            Text(text = "Historial de puntuaciones", fontWeight = FontWeight.Bold)
                             Spacer(modifier = Modifier.weight(1f))
                             IconButton(onClick = { vm.showInfo = true }) {
                                 Icon(imageVector = ImageVector.vectorResource(id = R.drawable.ic_info),
@@ -228,7 +241,7 @@ fun NuevaPartidaContent(paddingValues: PaddingValues, vm: NuevaPartidaViewModel 
                         }
                         Row(modifier = Modifier
                             .fillMaxWidth()
-                            .height(320.dp)
+                            .height(280.dp)
                             .padding(top = 15.dp, end = 15.dp),
                             horizontalArrangement = Arrangement.SpaceEvenly) {
                             if(nJug.equals("1") || nJug.equals("2") || nJug.equals("3") || nJug.equals("4")){
@@ -265,11 +278,11 @@ fun NuevaPartidaContent(paddingValues: PaddingValues, vm: NuevaPartidaViewModel 
 
                         }
 
-                        Divider()
+                        Divider(color = Purple40)
 
                         Row(modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 15.dp, end = 15.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
+                            .padding(bottom = 15.dp, end = 15.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
                             if(nJug.equals("1") || nJug.equals("2") || nJug.equals("3") || nJug.equals("4")){
                                 Text(text = vm.stateJugadores.get(0).puntaje.toString())
                             }
@@ -285,13 +298,32 @@ fun NuevaPartidaContent(paddingValues: PaddingValues, vm: NuevaPartidaViewModel 
 
                         }
 
-
-
-                    }
                 }
+                Row(modifier = Modifier.padding(start = 38.dp, end = 38.dp, top = 15.dp)) {
+                    IconButton(
+                        colors = IconButtonDefaults.iconButtonColors(containerColor = Red, contentColor = Color.White),
+                        modifier = Modifier
+                            .size(50.dp)
+                            .clip(CircleShape)
+                        ,onClick = {  }) {
+                        Icon(imageVector = ImageVector.vectorResource(id = R.drawable.ic_upload),
+                            contentDescription = "")
+                    }
+                    Spacer(modifier = Modifier.weight(1f))
+                    IconButton(
+                        colors = IconButtonDefaults.iconButtonColors(containerColor = Red, contentColor = Color.White),
+                        modifier = Modifier
+                            .size(50.dp)
+                            .clip(CircleShape)
+                            .shadow(elevation = 10.dp),
+                        onClick = {
+                            vm.end()
+                        }) {
+                        Icon(modifier = Modifier.size(24.dp),imageVector = ImageVector.vectorResource(id = R.drawable.ic_end),
+                            contentDescription = "")
+                    }
 
-
-
+                }
 
             }
 
@@ -401,6 +433,7 @@ fun NuevaPartidaContent(paddingValues: PaddingValues, vm: NuevaPartidaViewModel 
                 )
 
             }
+
         }
 
     }

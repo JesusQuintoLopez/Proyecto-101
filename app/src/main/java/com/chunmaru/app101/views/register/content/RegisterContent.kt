@@ -82,7 +82,7 @@ fun RegisterContent(
         ) {
             ConstraintLayout(modifier = Modifier.fillMaxSize()) {
                 val (registerForm, icon) = createRefs()
-                val glTop = createGuidelineFromTop(0.15f)
+                val glTop = createGuidelineFromTop(0.1f)
                 val glBottom = createGuidelineFromBottom(0.0f)
                 Card(
                     modifier = Modifier
@@ -95,6 +95,7 @@ fun RegisterContent(
                         }
                         .height(550.dp)
                         .width(350.dp),
+                    shape = RoundedCornerShape(25.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = Color.White.copy(0.8f),
                         contentColor = Color.Black

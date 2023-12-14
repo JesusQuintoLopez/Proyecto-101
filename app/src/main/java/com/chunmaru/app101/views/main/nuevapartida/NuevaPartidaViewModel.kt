@@ -1,21 +1,29 @@
 package com.chunmaru.app101.views.main.nuevapartida
 
+import android.app.Activity
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
-import com.chunmaru.app101.model.JugadorEntity
+import androidx.lifecycle.viewModelScope
+import com.chunmaru.app101.data.JugadorDataSource
+import com.chunmaru.app101.data.entity.JugadorEntity
+import com.chunmaru.app101.utils.Resource
+import com.google.android.gms.common.api.Response
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class NuevaPartidaViewModel @Inject constructor() : ViewModel() {
+class NuevaPartidaViewModel @Inject constructor(val jugadorDataSource: JugadorDataSource) : ViewModel() {
     var transition by mutableStateOf(0)
     var state by mutableStateOf(NuevaPartidaState())
         private set
-
+    var responseJugadores by mutableStateOf<Resource<List<JugadorEntity>>?>(null)
     var errorMessage = ""
     var showAlert by mutableStateOf(false)
     var showInfo by mutableStateOf(false)
@@ -66,6 +74,22 @@ class NuevaPartidaViewModel @Inject constructor() : ViewModel() {
         state = state.copy(punt4 = value)
     }
 
+    init {
+        responseJugadores = Resource.Loading
+        if (transition<3) getJugadores()
+    }
+
+    fun getJugadores()=viewModelScope.launch{
+        jugadorDataSource.getJugadores().collect(){
+            responseJugadores = it
+            Log.d("getJugadores","${stateJugadores.size}")
+        }
+    }
+
+    fun updateReturnGame(){
+
+    }
+
 
     fun validateForm(): Boolean {
         if (state.numJugadores.equals("")) {
@@ -81,7 +105,8 @@ class NuevaPartidaViewModel @Inject constructor() : ViewModel() {
         return true
     }
 
-    fun iniciarPartida() {
+    fun iniciarPartida()=viewModelScope.launch {
+
         for (i in 1..state.numJugadores.toInt()) {
             if (i == 1) stateJugadores.add(
                 JugadorEntity(
@@ -115,12 +140,12 @@ class NuevaPartidaViewModel @Inject constructor() : ViewModel() {
                 )
             )
         }
-
+        jugadorDataSource.insertAll(stateJugadores)
         Log.d("iniciarPar", stateJugadores.size.toString())
     }
 
     //accion cuando registra nueva puntuacion de los jugadores en 1 ronda
-    fun RegistrarPuntos() {
+    fun RegistrarPuntos()=viewModelScope.launch {
         listJug1.add(state.punt1)
         listJug2.add(state.punt2)
         listJug3.add(state.punt3)
@@ -133,6 +158,10 @@ class NuevaPartidaViewModel @Inject constructor() : ViewModel() {
 
         if (stateJugadores.size > 2) regularizarSobrepaso(2, stateJugadores.get(2).puntaje)
         if (stateJugadores.size > 3) regularizarSobrepaso(3, stateJugadores.get(3).puntaje)
+
+        stateJugadores.map { jug->
+            jugadorDataSource.update(jug.id,jug.name,jug.puntaje,jug.numElim,jug.deuda,jug.estado)
+        }
     }
 
     //suma de todos los puntajes del jugador
@@ -174,7 +203,7 @@ class NuevaPartidaViewModel @Inject constructor() : ViewModel() {
 
 
     //show alert para eliminar del juego totalmente a un jugador
-    fun AceptarShowAlertElim(){
+    fun AceptarShowAlertElim()=viewModelScope.launch{
         jugadoresEliminados.map { jug->
             if(stateJugadores.get(jug.id.toInt()).estado == false){
             regularizarEliminado(jug.id.toInt(),jug.puntaje)
@@ -183,6 +212,9 @@ class NuevaPartidaViewModel @Inject constructor() : ViewModel() {
             }
         }
         jugadoresEliminados.clear()
+        stateJugadores.map { jug->
+            jugadorDataSource.update(jug.id,jug.name,jug.puntaje,jug.numElim,jug.deuda,jug.estado)
+        }
     }
 
     //accion para eliminar del juego totalmente a un jugador
@@ -218,6 +250,29 @@ class NuevaPartidaViewModel @Inject constructor() : ViewModel() {
             }
         }
         return may
+    }
+    fun end()=viewModelScope.launch{
+        state=state.copy(
+             numJugadores = "4",
+             jugador1 = "",
+             jugador2 = "",
+             jugador3 = "",
+             jugador4 = "",
+             apuesta = "3",
+             punt1 = "0",
+             punt2 = "0",
+             punt3 = "0",
+             punt4 = "0"
+        )
+        transition = 0
+        stateJugadores.clear()
+        listJug1.clear()
+        listJug2.clear()
+        listJug3.clear()
+        listJug4.clear()
+
+        jugadorDataSource.delete()
+
     }
 
 }
