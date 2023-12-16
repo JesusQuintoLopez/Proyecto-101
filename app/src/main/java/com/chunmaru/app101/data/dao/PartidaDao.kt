@@ -22,6 +22,9 @@ interface PartidaDao {
     @Query("select  * from partida ORDER BY pk DESC limit 1")
     fun getPartida():Flow<List<PartidaEntity>>
 
+    @Query("UPDATE partida SET estado = :estado, ganador = :ganador WHERE pk = :pk")
+    suspend fun updatePartida(pk:Long,estado:Boolean, ganador:String):Int
+
     @Query("delete from partida")
     suspend fun delete()
 

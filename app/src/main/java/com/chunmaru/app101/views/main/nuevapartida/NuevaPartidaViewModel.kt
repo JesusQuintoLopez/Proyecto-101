@@ -34,6 +34,7 @@ class NuevaPartidaViewModel @Inject constructor(
         private set
     var responseJugadores by mutableStateOf<Resource<List<JugadorEntity>>?>(null)
     var responsePartida by mutableStateOf<Resource<List<PartidaEntity>>?>(null)
+    var partidaState by mutableStateOf<PartidaEntity?>(null)
     var errorMessage = ""
     var showAlert by mutableStateOf(false)
     var showInfo by mutableStateOf(false)
@@ -85,26 +86,32 @@ class NuevaPartidaViewModel @Inject constructor(
     }
 
     init {
-        responseJugadores = Resource.Loading
-        if (transition < 3) getJugadores()
+
+        updateReturnGame()
+        //if (transition < 3) getJugadores()
     }
 
-    fun getJugadores() = viewModelScope.launch() {
-        jugadorDataSource.getJugadores().collect() {
+    fun getJugadores(fk:Long) = viewModelScope.launch() {
+        responseJugadores = Resource.Loading
+        jugadorDataSource.getJugadoresByPk(fk).collect() {
             responseJugadores = it
             Log.d("getJugadores", "${stateJugadores.size}")
         }
     }
 
     fun updateReturnGame()=viewModelScope.launch {
-        transition = 3
+    //    transition = 3
+        responsePartida = Resource.Loading
         partidaDS.getPartida().collect(){
                 responsePartida = it
             }
     }
 
-    fun updateApuesta(apuesta:Int){
-        state = state.copy(apuesta= apuesta.toString())
+    fun updateApuAndJug(partida:PartidaEntity,fk:Long){
+        state = state.copy(apuesta= partida.apuesta.toString())
+        partidaState = partida
+        getJugadores(fk)
+        Log.d("partida","$partidaState")
     }
 
 
@@ -123,11 +130,11 @@ class NuevaPartidaViewModel @Inject constructor(
     }
 
     fun iniciarPartida() = viewModelScope.launch(Dispatchers.IO) {
-
+        partidaState = PartidaEntity(numJug = state.numJugadores.toInt(), apuesta = state.apuesta.toInt())
         val pkPart:Long? = partidaDS.insertPartida(
-            PartidaEntity(numJug = state.numJugadores.toInt(), apuesta = state.apuesta.toInt())
+            partidaState!!
         )
-
+        partidaState = partidaState!!.copy(pk= pkPart!!)
         for (i in 1..state.numJugadores.toInt()) {
             if (i == 1) {
                 stateJugadores.add(
@@ -317,7 +324,9 @@ class NuevaPartidaViewModel @Inject constructor(
         return may
     }
 
-    fun end() = viewModelScope.launch {
+    fun end() = viewModelScope.launch(Dispatchers.IO) {
+        partidaDS.updatePartida(partidaState!!.pk,false,partidaState!!.ganador)
+        partidaState = partidaState!!.copy(estado = false )
         state = state.copy(
             numJugadores = "4",
             jugador1 = "",
@@ -330,7 +339,6 @@ class NuevaPartidaViewModel @Inject constructor(
             punt3 = "0",
             punt4 = "0"
         )
-
         transition = 0
         stateJugadores.clear()
         listJug1.clear()

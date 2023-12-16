@@ -23,6 +23,9 @@ interface JugadorDao {
     @Query("UPDATE jugador SET name = :name, puntaje = :puntaje, numelim = :numElim, deuda = :deuda, estado = :estado WHERE id = :id")
     suspend fun update(id:String,name:String,puntaje:Int,numElim:Int,deuda:Int,estado:Boolean)
 
+    @Query("select * from jugador where partida_pk = :fk")
+    fun getJugadoresByPk(fk:Long):Flow<List<JugadorEntity>>
+
     @Query("DELETE FROM jugador")
     suspend fun delete()
 }

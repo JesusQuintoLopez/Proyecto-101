@@ -17,7 +17,8 @@ fun NuevaPartida(vm:NuevaPartidaViewModel = hiltViewModel()){
             LaunchedEffect(Unit){
                 if (vm.stateJugadores.size==0){
                     vm.stateJugadores.addAll(response.data)
-                    vm.updateReturnGame()
+                    //vm.updateReturnGame()
+                    vm.transition =3
                 }
             }
             //vm.updateReturnGame()
@@ -33,11 +34,16 @@ fun NuevaPartida(vm:NuevaPartidaViewModel = hiltViewModel()){
 
         }
         Resource.Loading -> {
-
+            CircularProgressIndicator()
         }
         is Resource.Success -> {
             LaunchedEffect(Unit){
-                vm.updateApuesta(res.data.get(0).apuesta)
+
+                if (res.data.get(0).estado){
+                    vm.updateApuAndJug(res.data.get(0),res.data.get(0).pk)
+                }else{
+                    vm.transition = 0
+                }
             }
         }
         null -> {

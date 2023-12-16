@@ -34,6 +34,21 @@ class JugadorDataSourceImpl(private val jugadorDao:JugadorDao):JugadorDataSource
         }
     }.flowOn(Dispatchers.IO)
 
+    override fun getJugadoresByPk(fk: Long): Flow<Resource<List<JugadorEntity>>> = flow {
+        jugadorDao.getJugadoresByPk(fk).collect(){
+            it.run {
+                Log.d("getJ","$it")
+                try {
+                    emit(Resource.Success(it))
+                    if (it.isNullOrEmpty()) emit(Resource.Failure("no hay registro de jugadores"))
+                }catch(e:Exception){
+                    Log.d("getJugadoresError: ","${e.localizedMessage}")
+                }
+
+            }
+        }
+    }.flowOn(Dispatchers.IO)
+
     override suspend fun update(id: String, name: String, puntaje: Int, numElim: Int, deuda: Int,estado:Boolean) {
         jugadorDao.update(id,name,puntaje,numElim,deuda,estado)
     }

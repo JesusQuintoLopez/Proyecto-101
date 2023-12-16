@@ -11,20 +11,22 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import java.io.IOException
 
-class PartidaDataSourceImpl(private val partidaDao:PartidaDao):PartidaDataSource {
-    override suspend fun insertPartida(partida: PartidaEntity):Long{
-       return partidaDao.insertPartida(partida)
+class PartidaDataSourceImpl(private val partidaDao: PartidaDao) : PartidaDataSource {
+    override suspend fun insertPartida(partida: PartidaEntity): Long {
+        return partidaDao.insertPartida(partida)
     }
-    override suspend fun insertAllPartidas(partidas: List<PartidaEntity>) = partidaDao.insertAllPartidas(partidas)
+
+    override suspend fun insertAllPartidas(partidas: List<PartidaEntity>) =
+        partidaDao.insertAllPartidas(partidas)
 
     override fun getPartidas(): Flow<Resource<List<PartidaEntity>>> = flow {
-        partidaDao.getPartidas().collect(){
+        partidaDao.getPartidas().collect() {
             it.run {
                 try {
                     emit(Resource.Success(it))
-                    if (it.isNullOrEmpty())emit(Resource.Failure("no hay registro de partidas"))
-                }catch (e:IOException){
-                    Log.d("getPartidasError: ","${e.localizedMessage}")
+                    if (it.isNullOrEmpty()) emit(Resource.Failure("no hay registro de partidas"))
+                } catch (e: IOException) {
+                    Log.d("getPartidasError: ", "${e.localizedMessage}")
                 }
 
             }
@@ -32,18 +34,21 @@ class PartidaDataSourceImpl(private val partidaDao:PartidaDao):PartidaDataSource
     }.flowOn(Dispatchers.IO)
 
     override fun getPartida(): Flow<Resource<List<PartidaEntity>>> = flow {
-        partidaDao.getPartida().collect(){
+        partidaDao.getPartida().collect() {
             it.run {
                 try {
                     emit(Resource.Success(it))
-                    if (it.isNullOrEmpty())emit(Resource.Failure("no hay registro de partidas"))
-                }catch (e:IOException){
-                    Log.d("getPartidasError: ","${e.localizedMessage}")
+                    if (it.isNullOrEmpty()) emit(Resource.Failure("no hay registro de partidas"))
+                } catch (e: IOException) {
+                    Log.d("getPartidasError: ", "${e.localizedMessage}")
                 }
 
             }
         }
     }.flowOn(Dispatchers.IO)
+
+    suspend override fun updatePartida(pk: Long, estado: Boolean, ganador: String): Int =
+        partidaDao.updatePartida(pk, estado, ganador)
 
     override suspend fun delete() = partidaDao.delete()
 

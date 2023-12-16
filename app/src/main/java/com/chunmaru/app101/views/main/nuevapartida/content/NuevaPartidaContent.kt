@@ -73,6 +73,8 @@ fun NuevaPartidaContent(paddingValues: PaddingValues, vm: NuevaPartidaViewModel 
     val activity = LocalContext.current as Activity
     val state = vm.state
     var nJug = vm.stateJugadores.size.toString()
+    var jugaresActivos = vm.stateJugadores.filter { it.estado==true }
+
     Box(
         modifier = Modifier
             .padding(paddingValues)
@@ -371,7 +373,7 @@ fun NuevaPartidaContent(paddingValues: PaddingValues, vm: NuevaPartidaViewModel 
 
             }
 
-            if (vm.jugadoresEliminados.size>0 && (vm.stateJugadores.size==vm.jugadoresEliminados.size+1)){
+            if (jugaresActivos.size==1 && vm.jugadoresEliminados.size>0){
                 var ganador = ""
                 vm.stateJugadores.map {jug->
                     if(jug.estado) ganador=jug.name
@@ -381,7 +383,9 @@ fun NuevaPartidaContent(paddingValues: PaddingValues, vm: NuevaPartidaViewModel 
                     onDismissRequest = { /*TODO*/ },
                     confirmButton = {
                         Button(
-                        onClick = { vm.AceptarShowAlertElim() },
+                        onClick = {
+
+                            vm.AceptarShowAlertElim() },
                         colors = ButtonDefaults.buttonColors(
                             contentColor = Color.White,
                             containerColor = Red)) {

@@ -9,5 +9,6 @@ interface PartidaDataSource {
     suspend fun insertAllPartidas(partidas:List<PartidaEntity>):List<Long>
     fun getPartidas(): Flow<Resource<List<PartidaEntity>>>
     fun getPartida(): Flow<Resource<List<PartidaEntity>>>
+    suspend fun updatePartida(pk:Long,estado:Boolean, ganador:String):Int
     suspend fun delete()
 }

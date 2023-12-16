@@ -8,6 +8,7 @@ interface JugadorDataSource {
     suspend fun insert(jugador:JugadorEntity)
     suspend fun insertAll(jugadores:List<JugadorEntity>)
     fun getJugadores():Flow<Resource<List<JugadorEntity>>>
+    fun getJugadoresByPk(fk:Long):Flow<Resource<List<JugadorEntity>>>
     suspend fun update(id:String,name:String,puntaje:Int,numElim:Int,deuda:Int,estado:Boolean)
     suspend fun delete()
 
