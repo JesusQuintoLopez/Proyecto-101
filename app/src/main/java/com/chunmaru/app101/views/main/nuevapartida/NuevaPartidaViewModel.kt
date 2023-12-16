@@ -10,20 +10,30 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.chunmaru.app101.data.JugadorDataSource
+import com.chunmaru.app101.data.PartidaDataSource
 import com.chunmaru.app101.data.entity.JugadorEntity
+import com.chunmaru.app101.data.entity.PartidaEntity
 import com.chunmaru.app101.utils.Resource
 import com.google.android.gms.common.api.Response
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class NuevaPartidaViewModel @Inject constructor(val jugadorDataSource: JugadorDataSource) : ViewModel() {
+class NuevaPartidaViewModel @Inject constructor(
+    val jugadorDataSource: JugadorDataSource,
+    val partidaDS: PartidaDataSource
+) : ViewModel() {
     var transition by mutableStateOf(0)
     var state by mutableStateOf(NuevaPartidaState())
         private set
     var responseJugadores by mutableStateOf<Resource<List<JugadorEntity>>?>(null)
+    var responsePartida by mutableStateOf<Resource<List<PartidaEntity>>?>(null)
     var errorMessage = ""
     var showAlert by mutableStateOf(false)
     var showInfo by mutableStateOf(false)
@@ -76,18 +86,25 @@ class NuevaPartidaViewModel @Inject constructor(val jugadorDataSource: JugadorDa
 
     init {
         responseJugadores = Resource.Loading
-        if (transition<3) getJugadores()
+        if (transition < 3) getJugadores()
     }
 
-    fun getJugadores()=viewModelScope.launch{
-        jugadorDataSource.getJugadores().collect(){
+    fun getJugadores() = viewModelScope.launch() {
+        jugadorDataSource.getJugadores().collect() {
             responseJugadores = it
-            Log.d("getJugadores","${stateJugadores.size}")
+            Log.d("getJugadores", "${stateJugadores.size}")
         }
     }
 
-    fun updateReturnGame(){
+    fun updateReturnGame()=viewModelScope.launch {
+        transition = 3
+        partidaDS.getPartida().collect(){
+                responsePartida = it
+            }
+    }
 
+    fun updateApuesta(apuesta:Int){
+        state = state.copy(apuesta= apuesta.toString())
     }
 
 
@@ -105,53 +122,74 @@ class NuevaPartidaViewModel @Inject constructor(val jugadorDataSource: JugadorDa
         return true
     }
 
-    fun iniciarPartida()=viewModelScope.launch {
+    fun iniciarPartida() = viewModelScope.launch(Dispatchers.IO) {
+
+        val pkPart:Long? = partidaDS.insertPartida(
+            PartidaEntity(numJug = state.numJugadores.toInt(), apuesta = state.apuesta.toInt())
+        )
 
         for (i in 1..state.numJugadores.toInt()) {
-            if (i == 1) stateJugadores.add(
-                JugadorEntity(
-                    id = "0",
-                    name = state.jugador1,
-                    deuda = state.apuesta.toInt()
+            if (i == 1) {
+                stateJugadores.add(
+                    JugadorEntity(
+                        id = "0", name = state.jugador1,
+                        deuda = state.apuesta.toInt(), partida_pk = pkPart ?:5
+                    )
                 )
-            )
+            }
 
-            if (i == 2) stateJugadores.add(
-                JugadorEntity(
-                    id = "1",
-                    name = state.jugador2,
-                    deuda = state.apuesta.toInt()
+            if (i == 2) {
+                stateJugadores.add(
+                    JugadorEntity(
+                        id = "1",
+                        name = state.jugador2,
+                        deuda = state.apuesta.toInt(),
+                        partida_pk = pkPart ?:5
+                    )
                 )
-            )
+            }
+            if (i == 3) {
+                stateJugadores.add(
+                    JugadorEntity(
+                        id = "2",
+                        name = state.jugador3,
+                        deuda = state.apuesta.toInt(),
+                        partida_pk = pkPart ?:5
+                    )
+                )
+            }
 
-            if (i == 3) stateJugadores.add(
-                JugadorEntity(
-                    id = "2",
-                    name = state.jugador3,
-                    deuda = state.apuesta.toInt()
+            if (i == 4) {
+                stateJugadores.add(
+                    JugadorEntity(
+                        id = "3",
+                        name = state.jugador4,
+                        deuda = state.apuesta.toInt(),
+                        partida_pk = pkPart ?:5
+                    )
                 )
-            )
-
-            if (i == 4) stateJugadores.add(
-                JugadorEntity(
-                    id = "3",
-                    name = state.jugador4,
-                    deuda = state.apuesta.toInt()
-                )
-            )
+            }
         }
+
         jugadorDataSource.insertAll(stateJugadores)
-        Log.d("iniciarPar", stateJugadores.size.toString())
+        Log.d("inic", stateJugadores.size.toString())
+        transition = 3
     }
 
+    suspend fun algo(): Long {
+        delay(2000)
+        return 2500
+    }
+
+
     //accion cuando registra nueva puntuacion de los jugadores en 1 ronda
-    fun RegistrarPuntos()=viewModelScope.launch {
+    fun RegistrarPuntos() = viewModelScope.launch {
         listJug1.add(state.punt1)
         listJug2.add(state.punt2)
         listJug3.add(state.punt3)
         listJug4.add(state.punt4)
 
-        suma(state.numJugadores)
+        suma(stateJugadores.size.toString())
 
         regularizarSobrepaso(0, stateJugadores.get(0).puntaje)
         regularizarSobrepaso(1, stateJugadores.get(1).puntaje)
@@ -159,8 +197,15 @@ class NuevaPartidaViewModel @Inject constructor(val jugadorDataSource: JugadorDa
         if (stateJugadores.size > 2) regularizarSobrepaso(2, stateJugadores.get(2).puntaje)
         if (stateJugadores.size > 3) regularizarSobrepaso(3, stateJugadores.get(3).puntaje)
 
-        stateJugadores.map { jug->
-            jugadorDataSource.update(jug.id,jug.name,jug.puntaje,jug.numElim,jug.deuda,jug.estado)
+        stateJugadores.map { jug ->
+            jugadorDataSource.update(
+                jug.id,
+                jug.name,
+                jug.puntaje,
+                jug.numElim,
+                jug.deuda,
+                jug.estado
+            )
         }
     }
 
@@ -203,22 +248,29 @@ class NuevaPartidaViewModel @Inject constructor(val jugadorDataSource: JugadorDa
 
 
     //show alert para eliminar del juego totalmente a un jugador
-    fun AceptarShowAlertElim()=viewModelScope.launch{
-        jugadoresEliminados.map { jug->
-            if(stateJugadores.get(jug.id.toInt()).estado == false){
-            regularizarEliminado(jug.id.toInt(),jug.puntaje)
-            }else{
-            regularizarSpartanos(jug.id.toInt(),jug.puntaje)
+    fun AceptarShowAlertElim() = viewModelScope.launch {
+        jugadoresEliminados.map { jug ->
+            if (stateJugadores.get(jug.id.toInt()).estado == false) {
+                regularizarEliminado(jug.id.toInt(), jug.puntaje)
+            } else {
+                regularizarSpartanos(jug.id.toInt(), jug.puntaje)
             }
         }
         jugadoresEliminados.clear()
-        stateJugadores.map { jug->
-            jugadorDataSource.update(jug.id,jug.name,jug.puntaje,jug.numElim,jug.deuda,jug.estado)
+        stateJugadores.map { jug ->
+            jugadorDataSource.update(
+                jug.id,
+                jug.name,
+                jug.puntaje,
+                jug.numElim,
+                jug.deuda,
+                jug.estado
+            )
         }
     }
 
     //accion para eliminar del juego totalmente a un jugador
-    fun regularizarEliminado(jug: Int, ptj: Int){
+    fun regularizarEliminado(jug: Int, ptj: Int) {
         val aux = stateJugadores.get(jug)
         stateJugadores.set(
             jug,
@@ -229,51 +281,64 @@ class NuevaPartidaViewModel @Inject constructor(val jugadorDataSource: JugadorDa
                 estado = false
             )
         )
-        when(jug){
-            0->{state=state.copy(punt1 = "0")}
-            1->{state=state.copy(punt2 = "0")}
-            2->{state=state.copy(punt3 = "0")}
-            3->{state=state.copy(punt4 = "0")}
+        when (jug) {
+            0 -> {
+                state = state.copy(punt1 = "0")
+            }
+
+            1 -> {
+                state = state.copy(punt2 = "0")
+            }
+
+            2 -> {
+                state = state.copy(punt3 = "0")
+            }
+
+            3 -> {
+                state = state.copy(punt4 = "0")
+            }
         }
     }
 
-    fun regularizarSpartanos(jug: Int, ptj: Int){
+    fun regularizarSpartanos(jug: Int, ptj: Int) {
         val aux = stateJugadores.get(jug)
-        stateJugadores.set(jug, aux.copy(puntaje = mayorPtj())
+        stateJugadores.set(
+            jug, aux.copy(puntaje = mayorPtj())
         )
     }
-    fun mayorPtj():Int{
-        var may=0
-        stateJugadores.map {jug->
-            if (jug.estado){
-                if (jug.puntaje>may) may = jug.puntaje
+
+    fun mayorPtj(): Int {
+        var may = 0
+        stateJugadores.map { jug ->
+            if (jug.estado) {
+                if (jug.puntaje > may) may = jug.puntaje
             }
         }
         return may
     }
-    fun end()=viewModelScope.launch{
-        state=state.copy(
-             numJugadores = "4",
-             jugador1 = "",
-             jugador2 = "",
-             jugador3 = "",
-             jugador4 = "",
-             apuesta = "3",
-             punt1 = "0",
-             punt2 = "0",
-             punt3 = "0",
-             punt4 = "0"
+
+    fun end() = viewModelScope.launch {
+        state = state.copy(
+            numJugadores = "4",
+            jugador1 = "",
+            jugador2 = "",
+            jugador3 = "",
+            jugador4 = "",
+            apuesta = "3",
+            punt1 = "0",
+            punt2 = "0",
+            punt3 = "0",
+            punt4 = "0"
         )
+
         transition = 0
         stateJugadores.clear()
         listJug1.clear()
         listJug2.clear()
         listJug3.clear()
         listJug4.clear()
-
-        jugadorDataSource.delete()
-
     }
 
 }
+
 

@@ -72,7 +72,7 @@ import com.chunmaru.app101.views.main.nuevapartida.NuevaPartidaViewModel
 fun NuevaPartidaContent(paddingValues: PaddingValues, vm: NuevaPartidaViewModel = hiltViewModel()) {
     val activity = LocalContext.current as Activity
     val state = vm.state
-    var nJug = vm.state.numJugadores
+    var nJug = vm.stateJugadores.size.toString()
     Box(
         modifier = Modifier
             .padding(paddingValues)
@@ -128,7 +128,6 @@ fun NuevaPartidaContent(paddingValues: PaddingValues, vm: NuevaPartidaViewModel 
                     onValueApu = { vm.onValueApuesta(it) },
                     onValueBtn = {
                         vm.iniciarPartida()
-                        vm.transition = 3
                     }
                 )
 

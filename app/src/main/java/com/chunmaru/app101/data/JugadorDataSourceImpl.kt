@@ -25,7 +25,7 @@ class JugadorDataSourceImpl(private val jugadorDao:JugadorDao):JugadorDataSource
                 Log.d("getJ","$it")
                 try {
                     emit(Resource.Success(it))
-                    if (it.isNullOrEmpty()) emit(Resource.Failure("fallaaa"))
+                    if (it.isNullOrEmpty()) emit(Resource.Failure("no hay registro de jugadores"))
                 }catch(e:Exception){
                     Log.d("getJugadoresError: ","${e.localizedMessage}")
                 }

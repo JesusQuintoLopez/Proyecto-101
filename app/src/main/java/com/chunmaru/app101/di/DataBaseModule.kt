@@ -4,7 +4,10 @@ import android.app.Application
 import androidx.room.Room
 import com.chunmaru.app101.data.JugadorDataSource
 import com.chunmaru.app101.data.JugadorDataSourceImpl
+import com.chunmaru.app101.data.PartidaDataSource
+import com.chunmaru.app101.data.PartidaDataSourceImpl
 import com.chunmaru.app101.data.dao.JugadorDao
+import com.chunmaru.app101.data.dao.PartidaDao
 import com.chunmaru.app101.data.db.App101DB
 import dagger.Module
 import dagger.Provides
@@ -27,8 +30,16 @@ object DataBaseModule {
     fun provideJugadorDao(db: App101DB): JugadorDao = db.jugadorDao()
 
     @Provides
+    @Singleton
+    fun providePartidaDao(db: App101DB): PartidaDao = db.partidaDao()
+
+    @Provides
     fun providesJugadorDataSource(jugadorDao: JugadorDao): JugadorDataSource =
         JugadorDataSourceImpl(jugadorDao)
+
+    @Provides
+    fun providesPartidaDataSource(partidaDao: PartidaDao): PartidaDataSource =
+        PartidaDataSourceImpl(partidaDao)
 
 
 }

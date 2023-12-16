@@ -17,7 +17,7 @@ interface JugadorDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(jugadores:List<JugadorEntity>)
 
-    @Query("SELECT * FROM JUGADOR")
+    @Query("SELECT * FROM JUGADOR where partida_pk = (select  partida.pk from partida ORDER BY pk DESC limit 1)")
     fun getJugadores():Flow<List<JugadorEntity>>
 
     @Query("UPDATE jugador SET name = :name, puntaje = :puntaje, numelim = :numElim, deuda = :deuda, estado = :estado WHERE id = :id")
