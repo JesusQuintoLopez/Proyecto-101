@@ -4,14 +4,12 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
 import com.chunmaru.app101.navigation.Graph
 import com.chunmaru.app101.navigation.screen.main.MainScreen
-import com.chunmaru.app101.views.main.MainView
 import com.chunmaru.app101.views.main.home.HomeView
 import com.chunmaru.app101.views.main.nuevapartida.NuevaPartidaView
 import com.chunmaru.app101.views.main.profile.ProfileView
-import com.chunmaru.app101.views.main.verpartida.VerPartidaView
+import com.chunmaru.app101.views.main.verpartida.list.VerPartidaListView
 
 @Composable
 fun MainNavGraph(navController: NavHostController){
@@ -25,10 +23,11 @@ fun MainNavGraph(navController: NavHostController){
             NuevaPartidaView(navController = navController)
         }
         composable(MainScreen.unirsePartida.route){
-            VerPartidaView(navController = navController)
+            VerPartidaListView(navController = navController)
         }
         composable(MainScreen.perfil.route){
             ProfileView(navController = navController)
         }
+        MainUnirseGraph(navController)
     }
 }

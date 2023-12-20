@@ -9,7 +9,7 @@ import com.chunmaru.app101.data.entity.PartidaEntity
 
 @Database(
     entities = [JugadorEntity::class,PartidaEntity::class],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class App101DB : RoomDatabase() {

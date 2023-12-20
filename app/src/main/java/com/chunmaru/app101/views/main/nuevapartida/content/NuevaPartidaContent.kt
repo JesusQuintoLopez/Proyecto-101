@@ -1,6 +1,7 @@
 package com.chunmaru.app101.views.main.nuevapartida.content
 
 import android.app.Activity
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -42,6 +43,7 @@ import androidx.compose.material3.Text
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -71,9 +73,13 @@ import com.chunmaru.app101.views.main.nuevapartida.NuevaPartidaViewModel
 @Composable
 fun NuevaPartidaContent(paddingValues: PaddingValues, vm: NuevaPartidaViewModel = hiltViewModel()) {
     val activity = LocalContext.current as Activity
+    val context = LocalContext.current
     val state = vm.state
+
     var nJug = vm.stateJugadores.size.toString()
     var jugaresActivos = vm.stateJugadores.filter { it.estado==true }
+    var jugaresInactivos = vm.stateJugadores.filter { it.estado==false }
+    
 
     Box(
         modifier = Modifier
@@ -92,6 +98,7 @@ fun NuevaPartidaContent(paddingValues: PaddingValues, vm: NuevaPartidaViewModel 
 
         Column{
 
+            var n = ""
 
             if (vm.transition == 0 || vm.transition == 1) {
                 Transition0(
@@ -101,9 +108,10 @@ fun NuevaPartidaContent(paddingValues: PaddingValues, vm: NuevaPartidaViewModel 
                     numJug = state.numJugadores,
                     onValue = {
                         vm.onValueNumJug(it)
+                        vm.transition = 0
                     },
                     {
-                        if (vm.validateForm()) {
+                        if (vm.validateNumJug()) {
                             vm.transition = 1
                         } else {
                             vm.showAlert = true
@@ -129,7 +137,11 @@ fun NuevaPartidaContent(paddingValues: PaddingValues, vm: NuevaPartidaViewModel 
                     onValue4 = { vm.onValueJug4(it) },
                     onValueApu = { vm.onValueApuesta(it) },
                     onValueBtn = {
-                        vm.iniciarPartida()
+                        if (vm.validateForm()){
+                            vm.iniciarPartida()
+                        }else{
+                            vm.showAlert = true
+                        }
                     }
                 )
 
@@ -306,10 +318,27 @@ fun NuevaPartidaContent(paddingValues: PaddingValues, vm: NuevaPartidaViewModel 
                         modifier = Modifier
                             .size(50.dp)
                             .clip(CircleShape)
-                        ,onClick = {  }) {
+                        ,onClick = {
+                            vm.saveNewPartidaFirebase {
+                                Toast.makeText(context,"Datos subidos a la nube",Toast.LENGTH_SHORT).show()
+                            }
+                        }) {
                         Icon(imageVector = ImageVector.vectorResource(id = R.drawable.ic_upload),
                             contentDescription = "")
                     }
+                    Spacer(modifier = Modifier.width(16.dp))
+                    IconButton(
+                        colors = IconButtonDefaults.iconButtonColors(containerColor = Red, contentColor = Color.White),
+                        modifier = Modifier
+                            .size(50.dp)
+                            .clip(CircleShape)
+                        ,onClick = {
+                            vm.textToSpeech(context)
+                        }) {
+                        Icon(imageVector = ImageVector.vectorResource(id = R.drawable.ic_voice),
+                            contentDescription = "")
+                    }
+
                     Spacer(modifier = Modifier.weight(1f))
                     IconButton(
                         colors = IconButtonDefaults.iconButtonColors(containerColor = Red, contentColor = Color.White),
@@ -339,7 +368,7 @@ fun NuevaPartidaContent(paddingValues: PaddingValues, vm: NuevaPartidaViewModel 
                 }
             }
 
-            if (vm.jugadoresEliminados.size>0 && (vm.stateJugadores.size>vm.jugadoresEliminados.size+1)){
+            if (vm.jugadoresEliminados.size>0 && (jugaresActivos.size > 1)){
                 AlertDialog(
                     title = { Text(
                         fontSize = 14.sp,
@@ -347,8 +376,9 @@ fun NuevaPartidaContent(paddingValues: PaddingValues, vm: NuevaPartidaViewModel 
                     text = {
                            Column {
                                vm.jugadoresEliminados.map {jug->
-                                   Row {
+                                   Row(verticalAlignment = Alignment.CenterVertically) {
                                    Text(text = jug.name)
+                                       Spacer(modifier = Modifier.weight(1f))
                                    Checkbox(
                                        checked = vm.stateJugadores.get(jug.id.toInt()).estado,
                                        onCheckedChange = {
@@ -384,8 +414,8 @@ fun NuevaPartidaContent(paddingValues: PaddingValues, vm: NuevaPartidaViewModel 
                     confirmButton = {
                         Button(
                         onClick = {
-
-                            vm.AceptarShowAlertElim() },
+                            vm.AceptarShowAlertElim()
+                            vm.definirGanador()  },
                         colors = ButtonDefaults.buttonColors(
                             contentColor = Color.White,
                             containerColor = Red)) {
@@ -435,6 +465,38 @@ fun NuevaPartidaContent(paddingValues: PaddingValues, vm: NuevaPartidaViewModel 
                     }
                 )
 
+            }
+
+
+            if (jugaresInactivos.size == vm.partidaState?.numJug && vm.jugadoresEliminados.size>0){
+                AlertDialog(
+                    title = { Text(text = "Todos los jugadores han sido eliminados")},
+                    text = { Text(text = "Los puntajes se reiniciaran a 0, desean aumentar el pozo millonario(+ apuesta) o manterlo(=)")},
+                    onDismissRequest = {
+                    },
+                    confirmButton = {
+                        Button(
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Red,
+                            contentColor = Color.White
+                        ),
+                        onClick = { vm.bntMantenerApuesta(true) }) {
+                        Text(text = "Mantn Pozo")
+                    }
+                        
+                    },
+                    dismissButton = {
+                        Button(
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Red,
+                                contentColor = Color.White
+                            ),
+                            onClick = { vm.bntMantenerApuesta(false) }) {
+                            Text(text = "Aumtr Pozo")
+                        }
+                    }
+
+                )
             }
 
         }

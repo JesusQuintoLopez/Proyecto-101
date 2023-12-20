@@ -13,5 +13,5 @@ data class JugadorEntity(
     @ColumnInfo val numElim:Int = 0,
     @ColumnInfo val deuda:Int = 0,
     @ColumnInfo val estado:Boolean = true,
-    @ColumnInfo val partida_pk:Long
+    @ColumnInfo val partida_pk:Long? = null
 )

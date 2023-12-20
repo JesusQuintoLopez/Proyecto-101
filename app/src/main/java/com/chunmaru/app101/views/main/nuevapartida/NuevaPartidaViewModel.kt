@@ -1,7 +1,10 @@
 package com.chunmaru.app101.views.main.nuevapartida
 
 import android.app.Activity
+import android.content.Context
+import android.speech.tts.TextToSpeech
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -15,6 +18,12 @@ import com.chunmaru.app101.data.entity.JugadorEntity
 import com.chunmaru.app101.data.entity.PartidaEntity
 import com.chunmaru.app101.utils.Resource
 import com.google.android.gms.common.api.Response
+import com.google.firebase.Firebase
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.auth
+import com.google.firebase.firestore.SetOptions
+import com.google.firebase.firestore.firestore
+import com.google.mlkit.nl.translate.TranslateLanguage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -22,6 +31,9 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
 import javax.inject.Inject
 
 @HiltViewModel
@@ -44,6 +56,10 @@ class NuevaPartidaViewModel @Inject constructor(
     var listJug3 = mutableStateListOf<String>("0")
     var listJug4 = mutableStateListOf<String>("0")
     var jugadoresEliminados = mutableStateListOf<JugadorEntity>()
+
+    //firebase
+    private val auth: FirebaseAuth = Firebase.auth
+    private val firestore = Firebase.firestore
 
     fun onValueNumJug(value: String) {
         state = state.copy(numJugadores = value)
@@ -91,6 +107,8 @@ class NuevaPartidaViewModel @Inject constructor(
         //if (transition < 3) getJugadores()
     }
 
+
+
     fun getJugadores(fk:Long) = viewModelScope.launch() {
         responseJugadores = Resource.Loading
         jugadorDataSource.getJugadoresByPk(fk).collect() {
@@ -115,15 +133,42 @@ class NuevaPartidaViewModel @Inject constructor(
     }
 
 
+    fun validateNumJug():Boolean{
+        if (state.numJugadores == ""){
+            errorMessage = "ingrese un numero"
+            return false
+        }else if (state.numJugadores.toIntOrNull() == null) {
+            errorMessage = "ingrese un numero valido"
+            return false
+        }else if (state.numJugadores.toInt()>4 || state.numJugadores.toInt() < 2){
+            errorMessage = "ingrese un numero entre 2-4"
+            return false
+        }
+        return true
+    }
+
+    fun Any.toNull() = this ?: null
     fun validateForm(): Boolean {
-        if (state.numJugadores.equals("")) {
+        if (!validateNumJug()) {
             errorMessage = "ingrese un numero entre 2 y 4"
             return false
-        } else if (state.numJugadores == "2" && (state.jugador1.equals("") || state.jugador2.equals(
-                ""
-            ))
-        ) {
+        } else if (state.numJugadores == "2" && (state.jugador1.equals("") || state.jugador2.equals(""))) {
             errorMessage = "rellene todos los campos"
+            return false
+        } else if (state.numJugadores == "3" && (state.jugador1.equals("") || state.jugador2.equals("")
+                    || state.jugador3.equals("") )){
+            errorMessage = "rellene todos los campos"
+            return false
+
+        } else if (state.numJugadores == "4" && (state.jugador1.equals("") || state.jugador2.equals("")
+                    || state.jugador3.equals("") || state.jugador4.equals(""))){
+            errorMessage = "rellene todos los campos"
+            return false
+        } else if (state.apuesta.equals("")){
+            errorMessage = "rellene todos los campos"
+            return false
+        } else if(state.apuesta.toIntOrNull() == null){
+            errorMessage = "ingrese un numero en la casilla apuesta"
             return false
         }
         return true
@@ -345,6 +390,110 @@ class NuevaPartidaViewModel @Inject constructor(
         listJug2.clear()
         listJug3.clear()
         listJug4.clear()
+    }
+
+    fun bntMantenerApuesta(isAcep:Boolean)=viewModelScope.launch(Dispatchers.IO){
+        jugadoresEliminados.map {
+            if (isAcep){
+                todosElim(it.id.toInt(),true,-partidaState!!.apuesta)
+            }else{
+                todosElim(it.id.toInt(),true,0)
+            }
+        }
+        jugadoresEliminados.clear()
+
+        stateJugadores.map { jug ->
+            jugadorDataSource.update(
+                jug.id,
+                jug.name,
+                jug.puntaje,
+                jug.numElim,
+                jug.deuda,
+                jug.estado
+            )
+        }
+
+    }
+
+    fun todosElim(jug: Int,estado:Boolean, apuesta:Int) {
+        val aux = stateJugadores.get(jug)
+        stateJugadores.set(
+            jug, aux.copy(puntaje = 0, estado = estado, deuda = aux.deuda+(apuesta))
+        )
+    }
+
+    fun definirGanador()=viewModelScope.launch{
+        val ganador = stateJugadores.filter { it.estado==true }
+        if (!ganador.isNullOrEmpty()){
+            partidaDS.updatePartida(partidaState!!.pk,partidaState!!.estado, ganador = ganador.get(0).name)
+        }
+    }
+
+
+    fun saveNewPartidaFirebase(onSuccess: () -> Unit) {
+        val email = auth.currentUser?.email
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val newPartida = partidaState.let {
+                        hashMapOf(
+                            "estado" to partidaState!!.estado,
+                            "numJug" to partidaState!!.numJug,
+                            "apuesta" to partidaState!!.apuesta,
+                            "ganador" to partidaState!!.ganador,
+                            "email" to email,
+                            "date" to formatDate()
+                        )
+                }
+                val uiDoc =  partidaState!!.pk.toString()+"-$email"
+
+                firestore.collection("partida").document(uiDoc)
+                    .set(newPartida, SetOptions.merge())
+                    .addOnSuccessListener {
+                        stateJugadores.map {
+                            firestore.collection("partida").document(uiDoc)
+                                .collection("jugador").document(it.id).set(it).addOnSuccessListener {
+
+                                }
+                        }
+                        onSuccess()
+                    }
+
+            } catch (e: Exception) {
+                Log.d("error NotesViewModel", "saveNewNote: ${e.localizedMessage}")
+            }
+        }
+    }
+
+
+    private var textToSpeech: TextToSpeech? = null
+
+    fun textToSpeech(context: Context){
+
+        var speek = ""
+        stateJugadores.map { speek = speek+" ${it.name} tiene ${it.puntaje}. " }
+
+        textToSpeech = TextToSpeech(
+            context
+        ){
+            if (it == TextToSpeech.SUCCESS){
+                textToSpeech?.let { txtToSpeech ->
+                    txtToSpeech.language = Locale.ROOT
+                    txtToSpeech.setSpeechRate(1.0f)
+                    txtToSpeech.speak(
+                        speek,
+                        TextToSpeech.QUEUE_ADD,
+                        null,
+                        null
+                    )
+                }
+            }
+        }
+    }
+
+    private fun formatDate(): String {
+        val currentDate = Calendar.getInstance().time
+        val res = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+        return res.format(currentDate)
     }
 
 }

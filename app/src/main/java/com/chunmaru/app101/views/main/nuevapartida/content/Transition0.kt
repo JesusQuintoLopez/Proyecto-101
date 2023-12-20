@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -24,6 +25,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.chunmaru.app101.R
@@ -70,7 +72,8 @@ fun Transition0(
                         Text(
                             text = "Numero de jugadores"
                         )
-                    })
+                    }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                )
                 Spacer(modifier = Modifier.width(16.dp))
 
                 IconButton(modifier = Modifier.size(50.dp).weight(0.2f), onClick = { onValueBtn() }) {
