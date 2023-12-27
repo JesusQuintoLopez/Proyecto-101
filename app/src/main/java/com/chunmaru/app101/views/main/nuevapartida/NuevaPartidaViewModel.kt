@@ -469,7 +469,7 @@ class NuevaPartidaViewModel @Inject constructor(
 
     fun textToSpeech(context: Context){
 
-        var speek = ""
+        var speek = "La puntuación es la siguiente: "
         stateJugadores.map { speek = speek+" ${it.name} tiene ${it.puntaje}. " }
 
         textToSpeech = TextToSpeech(

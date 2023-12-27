@@ -8,7 +8,8 @@ import com.chunmaru.app101.navigation.Graph
 import com.chunmaru.app101.navigation.screen.main.MainScreen
 import com.chunmaru.app101.views.main.home.HomeView
 import com.chunmaru.app101.views.main.nuevapartida.NuevaPartidaView
-import com.chunmaru.app101.views.main.profile.ProfileView
+import com.chunmaru.app101.views.main.profile.detail.ProfileDetailView
+
 import com.chunmaru.app101.views.main.verpartida.list.VerPartidaListView
 
 @Composable
@@ -26,8 +27,9 @@ fun MainNavGraph(navController: NavHostController){
             VerPartidaListView(navController = navController)
         }
         composable(MainScreen.perfil.route){
-            ProfileView(navController = navController)
+            ProfileDetailView(navController = navController)
         }
         MainUnirseGraph(navController)
+        MainProfileGraph(navController)
     }
 }

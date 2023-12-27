@@ -73,6 +73,7 @@ class RegisterViewModel @Inject constructor() : ViewModel() {
             name = state.nombres,
             lastName = state.apellidos,
             email = email.toString(),
+            image = ""
         )
 
         FirebaseFirestore.getInstance().collection("Users")
